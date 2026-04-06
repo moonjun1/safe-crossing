@@ -6,6 +6,15 @@ import CrossingList from "@/components/CrossingList";
 import CrossingMap from "@/components/CrossingMap";
 import { REGION_CODES } from "@/lib/api-client";
 import type { CrossingWithRisk } from "@/app/api/crossings/route";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 interface Stats {
   total: number;
@@ -61,14 +70,14 @@ export default function Home() {
   }, [fetchData]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* 헤더 */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-card border-b shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-5">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             {"\uD83D\uDEA6"} 안심 횡단
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             느린 보행자를 위한 교차로 안전 분석
           </p>
         </div>
@@ -78,27 +87,30 @@ export default function Home() {
         {/* 보행속도 설정 */}
         <SpeedSlider speed={speed} onSpeedChange={setSpeed} />
 
+        <Separator />
+
         {/* 지역 선택 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
-            지역 선택
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {Object.keys(REGION_CODES).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRegion(r)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  region === r
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">지역 선택</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={region} onValueChange={(val) => { if (val) setRegion(val); }}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="지역을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(REGION_CODES).map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        <Separator />
 
         {/* 카카오맵 (키가 있을 때만) */}
         {kakaoKey && <CrossingMap crossings={crossings} />}
@@ -113,8 +125,8 @@ export default function Home() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-white border-t border-gray-200 mt-8">
-        <div className="max-w-4xl mx-auto px-4 py-4 text-center text-xs text-gray-500">
+      <footer className="bg-card border-t mt-8">
+        <div className="max-w-4xl mx-auto px-4 py-4 text-center text-xs text-muted-foreground">
           <p>
             데이터 출처: 국가교통정보센터 (data.go.kr) | 교통안전 신호등 API
           </p>

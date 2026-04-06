@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 interface SpeedSliderProps {
   speed: number;
   onSpeedChange: (speed: number) => void;
@@ -15,58 +19,51 @@ export default function SpeedSlider({ speed, onSpeedChange }: SpeedSliderProps) 
   const isPreset = PRESETS.some((p) => p.value === speed);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">
-        보행 속도 설정
-      </h2>
-
-      {/* 프리셋 버튼 */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {PRESETS.map((preset) => (
-          <button
-            key={preset.value}
-            onClick={() => onSpeedChange(preset.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              speed === preset.value
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">보행 속도 설정</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* 프리셋 버튼 */}
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map((preset) => (
+            <Button
+              key={preset.value}
+              variant={speed === preset.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSpeedChange(preset.value)}
+            >
+              {preset.emoji} {preset.label} ({preset.value} m/s)
+            </Button>
+          ))}
+          <Button
+            variant={!isPreset ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              if (isPreset) onSpeedChange(1.0);
+            }}
           >
-            {preset.emoji} {preset.label} ({preset.value} m/s)
-          </button>
-        ))}
-        <button
-          onClick={() => {
-            if (isPreset) onSpeedChange(1.0);
-          }}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            !isPreset
-              ? "bg-blue-600 text-white shadow-md"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          직접 입력
-        </button>
-      </div>
+            직접 입력
+          </Button>
+        </div>
 
-      {/* 슬라이더 */}
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-500 whitespace-nowrap">0.4</span>
-        <input
-          type="range"
-          min="0.4"
-          max="1.5"
-          step="0.1"
-          value={speed}
-          onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-        />
-        <span className="text-sm text-gray-500 whitespace-nowrap">1.5</span>
-      </div>
+        {/* 슬라이더 */}
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">0.4</span>
+          <Slider
+            min={0.4}
+            max={1.5}
+            step={0.1}
+            value={[speed]}
+            onValueChange={(val) => onSpeedChange(Array.isArray(val) ? val[0] : val)}
+          />
+          <span className="text-sm text-muted-foreground whitespace-nowrap">1.5</span>
+        </div>
 
-      <p className="text-center mt-2 text-lg font-bold text-blue-700">
-        {speed.toFixed(1)} m/s
-      </p>
-    </div>
+        <p className="text-center text-lg font-bold text-primary">
+          {speed.toFixed(1)} m/s
+        </p>
+      </CardContent>
+    </Card>
   );
 }
