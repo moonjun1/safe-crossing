@@ -1,13 +1,15 @@
 "use client";
 
 import type { CrossingWithRisk } from "@/app/api/crossings/route";
-import { getRiskEmoji, getRiskColor } from "@/lib/risk-calculator";
+import { getRiskColor } from "@/lib/risk-calculator";
 import type { RiskLevel } from "@/lib/risk-calculator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from "lucide-react";
 
 interface CrossingDetailProps {
   crossing: CrossingWithRisk;
+  isHighlighted?: boolean;
 }
 
 function getRiskBadgeVariant(level: RiskLevel) {
@@ -23,18 +25,36 @@ function getRiskBadgeVariant(level: RiskLevel) {
   }
 }
 
-export default function CrossingDetail({ crossing }: CrossingDetailProps) {
+function getRiskIcon(level: RiskLevel) {
+  switch (level) {
+    case "danger":
+      return <AlertTriangle className="h-5 w-5 text-red-600" aria-hidden="true" />;
+    case "caution":
+      return <AlertCircle className="h-5 w-5 text-yellow-600" aria-hidden="true" />;
+    case "safe":
+      return <CheckCircle className="h-5 w-5 text-green-600" aria-hidden="true" />;
+    case "unknown":
+      return <HelpCircle className="h-5 w-5 text-gray-500" aria-hidden="true" />;
+  }
+}
+
+export default function CrossingDetail({ crossing, isHighlighted }: CrossingDetailProps) {
   const { risk } = crossing;
-  const emoji = getRiskEmoji(risk.level);
   const colorClass = getRiskColor(risk.level);
+  const icon = getRiskIcon(risk.level);
 
   return (
-    <Card className={`border-2 transition-all hover:shadow-md ${colorClass}`}>
+    <Card
+      className={`border-2 transition-all hover:shadow-md ${colorClass} ${
+        isHighlighted ? "animate-pulse ring-2 ring-blue-400" : ""
+      }`}
+      aria-label={`${crossing.name} - ${risk.label}`}
+    >
       <CardContent>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">{emoji}</span>
+              {icon}
               <h3 className="text-base font-semibold text-foreground truncate">
                 {crossing.name}
               </h3>
@@ -59,10 +79,14 @@ export default function CrossingDetail({ crossing }: CrossingDetailProps) {
                 <span>제한속도: {crossing.speedLimit}km/h</span>
               )}
             </div>
+
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              클릭하여 상세 정보 보기
+            </p>
           </div>
 
           <div className="flex-shrink-0">
-            <Badge variant={getRiskBadgeVariant(risk.level)}>
+            <Badge variant={getRiskBadgeVariant(risk.level)} className="gap-1">
               {risk.label}
             </Badge>
           </div>
