@@ -1,65 +1,128 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import SpeedSlider from "@/components/SpeedSlider";
+import CrossingList from "@/components/CrossingList";
+import CrossingMap from "@/components/CrossingMap";
+import { REGION_CODES } from "@/lib/api-client";
+import type { CrossingWithRisk } from "@/app/api/crossings/route";
+
+interface Stats {
+  total: number;
+  danger: number;
+  caution: number;
+  safe: number;
+  unknown: number;
+}
 
 export default function Home() {
+  const [speed, setSpeed] = useState(0.8);
+  const [region, setRegion] = useState("서울");
+  const [crossings, setCrossings] = useState<CrossingWithRisk[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({
+        region,
+        speed: speed.toString(),
+        numOfRows: "30",
+      });
+
+      const res = await fetch(`/api/crossings?${params}`);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "데이터 로딩 실패");
+      }
+
+      const data = await res.json();
+      setCrossings(data.crossings || []);
+      setStats(data.stats || null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "데이터를 가져오지 못했습니다."
+      );
+      setCrossings([]);
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [region, speed]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-5">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {"\uD83D\uDEA6"} 안심 횡단
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            느린 보행자를 위한 교차로 안전 분석
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* 보행속도 설정 */}
+        <SpeedSlider speed={speed} onSpeedChange={setSpeed} />
+
+        {/* 지역 선택 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+            지역 선택
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {Object.keys(REGION_CODES).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRegion(r)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  region === r
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* 카카오맵 (키가 있을 때만) */}
+        {kakaoKey && <CrossingMap crossings={crossings} />}
+
+        {/* 교차로 목록 */}
+        <CrossingList
+          crossings={crossings}
+          stats={stats}
+          loading={loading}
+          error={error}
+        />
       </main>
+
+      {/* 푸터 */}
+      <footer className="bg-white border-t border-gray-200 mt-8">
+        <div className="max-w-4xl mx-auto px-4 py-4 text-center text-xs text-gray-500">
+          <p>
+            데이터 출처: 국가교통정보센터 (data.go.kr) | 교통안전 신호등 API
+          </p>
+          <p className="mt-1">
+            본 서비스는 참고용이며, 실제 횡단 시 현장 신호를 확인하세요.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
