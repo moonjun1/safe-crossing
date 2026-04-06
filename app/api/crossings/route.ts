@@ -27,15 +27,21 @@ export interface CrossingWithRisk {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const region = searchParams.get("region") || "서울";
+  const stdgCdParam = searchParams.get("stdgCd"); // 직접 10자리 코드 전달 가능
   const speed = parseFloat(searchParams.get("speed") || "0.8");
   const numOfRows = parseInt(searchParams.get("numOfRows") || "30", 10);
 
-  const stdgCd = REGION_CODES[region];
+  // stdgCd가 직접 전달되면 사용, 아니면 region 매핑
+  let stdgCd = stdgCdParam;
   if (!stdgCd) {
-    return NextResponse.json(
-      { error: `알 수 없는 지역: ${region}` },
-      { status: 400 }
-    );
+    const prefix = REGION_CODES[region];
+    if (!prefix) {
+      return NextResponse.json(
+        { error: `알 수 없는 지역: ${region}` },
+        { status: 400 }
+      );
+    }
+    stdgCd = prefix + "00000000";
   }
 
   try {
